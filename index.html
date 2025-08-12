@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>S1 Points Form</title>
+    <style>
+      :root {
+        --bg: #0f172a; --card: #111827; --text: #e5e7eb; --muted: #9ca3af;
+        --primary: #22c55e; --primary-600: #16a34a; --ring: rgba(34,197,94,.35); --error:#ef4444;
+      }
+      *{box-sizing:border-box} html,body{height:100%}
+      body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
+        background: radial-gradient(1200px 800px at 20% 10%, #111827, #0b1224), var(--bg);
+        color:var(--text);display:grid;place-items:center;padding:24px}
+      .card{width:100%;max-width:640px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
+        border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:28px;box-shadow:0 20px 40px rgba(0,0,0,.35);backdrop-filter:blur(6px)}
+      h1{margin:0 0 8px;font-size:1.5rem;letter-spacing:.2px}
+      p.desc{margin:0 0 20px;color:var(--muted)}
+      label{display:block;margin:14px 0 8px;font-weight:600}
+      select, textarea, input[type="text"]{
+        width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);
+        background:rgba(17,24,39,.75);color:var(--text);outline:none;transition:border-color .14s, box-shadow .14s;
+      }
+      select:focus, textarea:focus, input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--ring)}
+      .hint{color:var(--muted);font-size:.9rem;margin-top:6px}
+      .btn{margin-top:18px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:12px;
+        border:1px solid rgba(255,255,255,.12);background:linear-gradient(180deg,var(--primary),var(--primary-600));color:#fff;font-weight:700;cursor:pointer}
+      .notice{margin-top:12px;font-size:.95rem}.notice.error{color:var(--error)}
+      footer{margin-top:18px;color:var(--muted);font-size:.85rem}
+      @media (max-width:480px){.card{padding:20px}h1{font-size:1.25rem}}
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>S1 Points</h1>
+      <p class="desc">Select your unit and share your points</p>
+
+      <!-- Apps Script endpoint -->
+      <form id="scouts-form"
+            action="https://script.google.com/macros/s/AKfycbyyUeT_LtM6VC-T8sMYouUmNL5DPS0IIr7nInzy8hvXJC230O0fK8YI-Mtu9X8KuKCXaQ/exec"
+            method="POST" novalidate>
+        <label for="unit">Select your unit</label>
+        <select id="unit" name="unit" required>
+          <option value="">-- Please choose an option --</option>
+          <option value="beavers">Beavers</option>
+          <option value="cubs">Cubs</option>
+          <option value="girlscouts">Girl Scouts</option>
+          <option value="boyscouts">Boy Scouts</option>
+          <option value="pioneers">Pioneers</option>
+          <option value="rovers">Rovers</option>
+        </select>
+        <div class="hint">Required</div>
+
+        <label for="title">Title (Your Points)</label>
+        <input id="title" name="title" type="text" placeholder="e.g., Camp prep notes" required minlength="3" maxlength="120"/>
+
+        <label for="points">Your Points</label>
+        <textarea id="points" name="points" rows="7" placeholder="Write your points…" required minlength="20" maxlength="1000"></textarea>
+        <div class="hint"><span id="char-count">0</span>/1000</div>
+
+        <!-- After submission, redirect to a thank-you page -->
+        <input type="hidden" name="_redirect" value="./thanks.html" />
+
+        <button class="btn" type="submit">Submit</button>
+        <div id="notice" class="notice" aria-live="polite"></div>
+      </form>
+
+      <footer>Hosted by S1 Administration · No cookies · Accessible labels.</footer>
+    </main>
+
+    <script>
+      const pointsEl = document.getElementById('points');
+      const counterEl = document.getElementById('char-count');
+      pointsEl.addEventListener('input', () => { counterEl.textContent = pointsEl.value.length; });
+
+      // Client-side validation message
+      const form = document.getElementById('scouts-form');
+      const notice = document.getElementById('notice');
+      form.addEventListener('submit', (e) => {
+        notice.textContent = ''; notice.className = 'notice';
+        if (!form.checkValidity()) { e.preventDefault(); notice.textContent = 'Please complete all required fields.'; notice.classList.add('error'); }
+      });
+    </script>
+  </body>
+</html>

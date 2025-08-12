@@ -1,0 +1,115 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>S1 Submissions Dashboard</title>
+  <style>
+    body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;margin:0;background:#0f172a;color:#e5e7eb}
+    .wrap{max-width:1000px;margin:24px auto;padding:0 16px}
+    h1{margin:0 0 12px}
+    .bar{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0 16px}
+    select,input,button{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:#111827;color:#e5e7eb}
+    table{width:100%;border-collapse:collapse;background:#0b1326;border:1px solid rgba(255,255,255,.08)}
+    th,td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:top}
+    th{position:sticky;top:0;background:#0b1326}
+    .muted{color:#9ca3af}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#1f2937}
+    .err{color:#ef4444;margin-top:8px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>S1 Submissions Dashboard</h1>
+    <div class="bar">
+      <label>Unit:
+        <select id="unitFilter">
+          <option value="">All units</option>
+          <option>beavers</option><option>cubs</option><option>girlscouts</option>
+          <option>boyscouts</option><option>pioneers</option><option>rovers</option>
+        </select>
+      </label>
+      <input id="search" type="search" placeholder="Search title or points…">
+      <button id="refresh">Refresh</button>
+    </div>
+
+    <div id="error" class="err"></div>
+
+    <table id="tbl">
+      <thead>
+        <tr>
+          <th style="width:160px">Created</th>
+          <th style="width:120px">Unit</th>
+          <th style="width:220px">Title</th>
+          <th>Points</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <p class="muted">Tip: bookmark this page. Data refreshes from the Google Sheet.</p>
+  </div>
+
+  <script>
+    const ENDPOINT = "https://script.google.com/macros/s/AKfycbyyUeT_LtM6VC-T8sMYouUmNL5DPS0IIr7nInzy8hvXJC230O0fK8YI-Mtu9X8KuKCXaQ/exec";
+    const SECRET = ""; // set only if you added SHARED_SECRET in Apps Script
+
+    let allRows = [];
+
+    async function fetchRows(){
+      const e = document.getElementById('error'); e.textContent = '';
+      const url = (SECRET ? `${ENDPOINT}?token=${encodeURIComponent(SECRET)}` : ENDPOINT) + `&t=${Date.now()}`;
+      try{
+        const res = await fetch(url, { method: 'GET' });
+        if (!res.ok) throw new Error('HTTP '+res.status);
+        const data = await res.json();
+        allRows = (data.rows || []);
+        render();
+      }catch(err){
+        e.textContent = 'Could not load data. If this persists, tell me and I’ll switch it to a JSONP version.';
+      }
+    }
+
+    function render(){
+      const unit = document.getElementById('unitFilter').value.trim().toLowerCase();
+      const q = document.getElementById('search').value.trim().toLowerCase();
+      const tbody = document.querySelector('#tbl tbody');
+      tbody.innerHTML = '';
+
+      const filtered = allRows.filter(r=>{
+        const unitOk = !unit || (String(r.unit).toLowerCase() === unit);
+        const text = `${r.title||''} ${r.points||''}`.toLowerCase();
+        const searchOk = !q || text.includes(q);
+        return unitOk && searchOk;
+      });
+
+      for(const r of filtered){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.created_at || ''}</td>
+          <td><span class="pill">${r.unit || ''}</span></td>
+          <td>${escapeHtml(r.title || '')}</td>
+          <td>${escapeHtml(r.points || '')}</td>`;
+        tbody.appendChild(tr);
+      }
+
+      if(filtered.length === 0){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="4" class="muted">No results.</td>`;
+        tbody.appendChild(tr);
+      }
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+    }
+
+    document.getElementById('unitFilter').addEventListener('change', render);
+    document.getElementById('search').addEventListener('input', render);
+    document.getElementById('refresh').addEventListener('click', fetchRows);
+
+    fetchRows();
+  </script>
+</body>
+</html>
